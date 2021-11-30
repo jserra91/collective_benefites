@@ -1,4 +1,4 @@
-import nock from 'nock'
+import nock, { Options } from 'nock'
 import { createRequest, createResponse } from 'node-mocks-http'
 import Authorise from './index'
 import TokenGenerator from './__tests__/TokenGenerator'
@@ -47,4 +47,67 @@ describe('A request with a valid access token', () => {
     await Authorise(options)(req, res, next)
     expect(req).toHaveProperty('user', claims)
   })
+
+  test('empty response and request. Should return 401', async () => {
+    const res = createResponse()
+    const next = jest.fn()
+    const req = createRequest();
+
+    await Authorise(options)(req, res, next)
+    expect(res).toHaveProperty('statusCode', 401)
+  })
+
+  test('empty response, request and options (undefined). Should return 401', async () => {
+    const res = createResponse()
+    const next = jest.fn()
+    const req = createRequest();
+
+    await Authorise(undefined)(req, res, next)
+    expect(res).toHaveProperty('statusCode', 401)
+  })
+
+  test('empty response, request and options (issuer). Should return 401', async () => {
+    const res = createResponse()
+    const next = jest.fn()
+    const req = createRequest();
+    const options = {
+      issuer: undefined,
+      audience: 'audience',
+      algorithms: ['RS256' as Algorithm],
+    };
+    await Authorise(options)(req, res, next)
+    expect(res).toHaveProperty('statusCode', 401)
+  })
+
+  test('empty response, request and options (audience). Should return 401', async () => {
+    const res = createResponse()
+    const next = jest.fn()
+    const req = createRequest();
+    const options = {
+      issuer: 'http://issuer.com',
+      audience: undefined,
+      algorithms: ['RS256' as Algorithm],
+    };
+    await Authorise(options)(req, res, next)
+    expect(res).toHaveProperty('statusCode', 401)
+  })
+
+  test('empty response, request and options (algorithms). Should return 401', async () => {
+    const res = createResponse()
+    const next = jest.fn()
+    const req = createRequest();
+    const options = {
+      issuer: 'http://issuer.com',
+      audience: 'audience',
+      algorithms: [],
+    };
+    await Authorise(options)(req, res, next)
+    expect(res).toHaveProperty('statusCode', 401)
+  })
 })
+
+/**
+ * Definition of done:
+ * All possible cases that can generate an error should be tested. 
+ * Either because there is no connection to the OAuth2 client or because there is a config error.
+ */
